@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useLeague } from '@/context/useLeague';
-import { getPlayerStats, generateWhatsAppText } from '@/lib/stats';
+import { getPlayerStats, generateWhatsAppText, getMatchDates } from '@/lib/stats';
 import { FilterMode } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Crown, Flame, Share2, Filter, BarChart3, ChevronLeft, ChevronRight } from 'lucide-react';
@@ -9,8 +9,37 @@ import PlayerCard from '@/components/PlayerCard';
 export default function Dashboard() {
   const { players, matches, filterMode, setFilterMode } = useLeague();
   const stats = getPlayerStats(players, matches, filterMode);
+  // Determinar el MVP más reciente (última jornada)
+  const lastDate = getMatchDates(matches).slice(-1)[0];
+  let lastMvpId: string | null = null;
+  if (lastDate) {
+    // Calcular puntos de la última jornada (goles x2 + asistencias)
+    const lastMatches = matches.filter(m => m.date === lastDate);
+    const lastDatePoints: Record<string, number> = {};
+    lastMatches.forEach(m => {
+      Object.entries(m.stats).forEach(([playerId, stat]) => {
+        lastDatePoints[playerId] = (lastDatePoints[playerId] || 0) + stat.goals * 2 + stat.assists;
+      });
+    });
+    const maxLastPoints = Math.max(0, ...Object.values(lastDatePoints));
+    const candidates = Object.entries(lastDatePoints)
+      .filter(([, points]) => points === maxLastPoints)
+      .map(([playerId]) => playerId);
+    if (candidates.length === 1) {
+      lastMvpId = candidates[0];
+    } else if (candidates.length > 1) {
+      // desempate por streak
+      lastMvpId = candidates.reduce((best, current) => {
+        const bestPlayer = players.find(p => p.id === best);
+        const currentPlayer = players.find(p => p.id === current);
+        const bestStreak = bestPlayer?.stats.streak || 0;
+        const currentStreak = currentPlayer?.stats.streak || 0;
+        return currentStreak > bestStreak ? current : best;
+      });
+    }
+  }
   const [currentPage, setCurrentPage] = useState(1);
-  const playersPerPage = 20;
+  const playersPerPage = 10;
 
   const totalPages = Math.ceil(stats.length / playersPerPage);
   const startIndex = (currentPage - 1) * playersPerPage;
@@ -64,7 +93,8 @@ export default function Dashboard() {
             <thead>
               <tr className="border-b border-border/50">
                 <th className="text-left px-4 py-3 font-semibold text-muted-foreground">#</th>
-                <th className="text-left px-4 py-3 font-semibold text-muted-foreground">Jugador</th>
+                <th className="text-left px-8 py-3 font-semibold text-muted-foreground min-w-[160px]">Jugador</th>
+                  <th className="text-left px-8 py-3 font-semibold text-muted-foreground whitespace-nowrap max-w-fit">Jugador</th>
                 <th className="text-center px-3 py-3 font-semibold text-muted-foreground">G</th>
                 <th className="text-center px-3 py-3 font-semibold text-muted-foreground">A</th>
                 <th className="text-center px-3 py-3 font-semibold text-muted-foreground">GS</th>
@@ -75,36 +105,33 @@ export default function Dashboard() {
             <tbody>
               {currentStats.map((s, i) => {
                 const actualRank = startIndex + i;
+                const isLastMvp = s.playerId === lastMvpId;
                 return (
-                <tr
-                  key={s.playerId}
-                  className={`border-b border-border/30 transition-all hover:bg-accent/30 ${
-                    s.isMvp ? 'gold-highlight bg-gold/5' : ''
-                  }`}
-                  style={{ animationDelay: `${i * 50}ms` }}
-                >
-                  <td className="px-4 py-3 font-bold text-muted-foreground">
-                    {actualRank === 0 ? '🥇' : actualRank === 1 ? '🥈' : actualRank === 2 ? '🥉' : actualRank + 1}
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold">{s.name}</span>
-                      {s.isMvp && <Crown className="h-4 w-4 text-gold" />}
-                      {s.isHotStreak && (
-                        <div className="flex items-center gap-1 fire-indicator">
-                          <Flame className="h-3 w-3" />
-                        </div>
-                      )}
-                    </div>
-                  </td>
-                  <td className="text-center px-3 py-3 font-medium">{s.goals}</td>
-                  <td className="text-center px-3 py-3 font-medium">{s.assists}</td>
-                  <td className="text-center px-3 py-3 font-medium">{s.soloGoals}</td>
-                  <td className="text-center px-3 py-3">
-                    <span className="stat-badge bg-mint text-mint-foreground">{s.points}</span>
-                  </td>
-                  <td className="text-center px-3 py-3 text-muted-foreground">{s.matchesPlayed}</td>
-                </tr>
+                  <tr
+                    key={s.playerId}
+                    className={`border-b border-border/30 transition-all hover:bg-accent/30 ${
+                      isLastMvp ? 'gold-highlight bg-gold/5' : ''
+                    }`}
+                    style={{ animationDelay: `${i * 50}ms` }}
+                  >
+                    <td className="px-4 py-3 font-bold text-muted-foreground">
+                      {actualRank === 0 ? '🥇' : actualRank === 1 ? '🥈' : actualRank === 2 ? '🥉' : actualRank + 1}
+                    </td>
+                    <td className="px-8 py-3 min-w-[160px] whitespace-nowrap max-w-fit">
+                      <span className="flex items-center gap-2 truncate">
+                        <span className="font-semibold truncate block max-w-[320px]">{s.name}</span>
+                        {isLastMvp && <Crown className="h-4 w-4 text-gold" />}
+                        {s.isHotStreak && <Flame className="h-3 w-3" />}
+                      </span>
+                    </td>
+                    <td className="text-center px-3 py-3 font-medium">{s.goals}</td>
+                    <td className="text-center px-3 py-3 font-medium">{s.assists}</td>
+                    <td className="text-center px-3 py-3 font-medium">{s.soloGoals}</td>
+                    <td className="text-center px-3 py-3">
+                      <span className="stat-badge bg-mint text-mint-foreground">{s.points}</span>
+                    </td>
+                    <td className="text-center px-3 py-3 text-muted-foreground">{s.matchesPlayed}</td>
+                  </tr>
                 );
               })}
             </tbody>

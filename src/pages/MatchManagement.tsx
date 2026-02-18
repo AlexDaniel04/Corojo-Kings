@@ -13,6 +13,12 @@ import { Match } from '@/types';
 import { Calendar } from '@/components/ui/calendar';
 
 export default function MatchManagement() {
+      // Estado de paginación para partidos del día
+      const [currentPage, setCurrentPage] = useState(1);
+    // Estados para edición de gol gana
+    const [scorer, setScorer] = useState("");
+    const [assistant, setAssistant] = useState("");
+    const [individualPlay, setIndividualPlay] = useState(false);
   const { players, matches, addMatch, updateMatch, deleteMatch } = useLeague();
   const { toast } = useToast();
 
@@ -34,6 +40,10 @@ export default function MatchManagement() {
   const [winner, setWinner] = useState<'A' | 'B' | 'draw'>('draw');
   const [isPenalties, setIsPenalties] = useState(false);
   const [stats, setStats] = useState<{[playerId: string]: {goals: number, assists: number, individualPlay: boolean}}>({});
+
+  // Estados de búsqueda individuales para cada dropdown de jugador
+  const [teamASearches, setTeamASearches] = useState(["", "", ""]);
+  const [teamBSearches, setTeamBSearches] = useState(["", "", ""]);
 
   // Get matches for selected date
   const dateMatches = useMemo(() => {
@@ -339,99 +349,125 @@ export default function MatchManagement() {
         </CardContent>
       </Card>
 
-      {/* Matches List */}
-      <div className="space-y-4">
-        {dateMatches.length === 0 ? (
+      {/* Matches List con paginación */}
+      {/* Paginación de partidos del día */}
+      {dateMatches.length === 0 ? (
+        <div className="space-y-4">
           <Card className="glass-card">
             <CardContent className="text-center py-8">
               <CalendarDays className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
               <p className="text-muted-foreground">No hay partidos registrados para esta fecha</p>
             </CardContent>
           </Card>
-        ) : (
-          dateMatches.map((match, index) => (
-            <Card key={match.id} className="glass-card">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="flex items-center gap-2">
-                    <Trophy className="h-5 w-5" />
-                    Partido {index + 1}
-                  </CardTitle>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleEditMatch(match)}
-                      className="gap-1"
-                    >
-                      <Edit className="h-3 w-3" />
-                      Editar
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => handleDeleteMatch(match.id)}
-                      className="gap-1"
-                    >
-                      <Trash2 className="h-3 w-3" />
-                      Eliminar
-                    </Button>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {/* Team A */}
-                  <div>
-                    <h4 className="font-semibold mb-2 flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full bg-mint"></div>
-                      Equipo A
-                    </h4>
-                    <div className="space-y-1">
-                      {match.teamA.map(playerId => (
-                        <div key={playerId} className="text-sm">
-                          {getPlayerName(playerId)}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Score */}
-                  <div className="text-center">
-                    <div className="text-2xl font-bold mb-2">
-                      {match.scoreA} - {match.scoreB}
-                    </div>
-                    <Badge variant={match.winner === 'A' ? 'default' : match.winner === 'B' ? 'secondary' : 'outline'}>
-                      {match.winner === 'A' ? 'Ganó A' : match.winner === 'B' ? 'Ganó B' : 'Empate'}
-                    </Badge>
-                    {match.isPenalties && (
-                      <div className="text-xs text-muted-foreground mt-1">
-                        Por penales
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {(() => {
+            const matchesPerPage = 5;
+            const totalPages = Math.ceil(dateMatches.length / matchesPerPage);
+            const startIndex = (currentPage - 1) * matchesPerPage;
+            const endIndex = startIndex + matchesPerPage;
+            const paginatedMatches = dateMatches.slice(startIndex, endIndex);
+            return <>
+              {paginatedMatches.map((match, index) => (
+                <Card key={match.id} className="glass-card">
+                  <CardHeader>
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                      <CardTitle className="flex items-center gap-2 min-w-0">
+                        <Trophy className="h-5 w-5 shrink-0" />
+                        <span className="truncate">Partido {startIndex + index + 1}</span>
+                      </CardTitle>
+                      <div className="flex gap-2 flex-shrink-0">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleEditMatch(match)}
+                          className="gap-1"
+                        >
+                          <Edit className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => handleDeleteMatch(match.id)}
+                          className="gap-1"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                          Eliminar
+                        </Button>
                       </div>
-                    )}
-                  </div>
-
-                  {/* Team B */}
-                  <div>
-                    <h4 className="font-semibold mb-2 flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full bg-lavender"></div>
-                      Equipo B
-                    </h4>
-                    <div className="space-y-1">
-                      {match.teamB.map(playerId => (
-                        <div key={playerId} className="text-sm">
-                          {getPlayerName(playerId)}
-                        </div>
-                      ))}
                     </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))
-        )}
-      </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {/* Team A */}
+                      <div>
+                        <h4 className="font-semibold mb-2 flex items-center gap-2">
+                          <div className="w-3 h-3 rounded-full bg-mint"></div>
+                          Equipo A
+                        </h4>
+                        <div className="space-y-1">
+                          {match.teamA.map(playerId => (
+                            <div key={playerId} className="text-sm">
+                              {getPlayerName(playerId)}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
 
+                      {/* Score */}
+                      <div className="text-center">
+                        <div className="text-2xl font-bold mb-2">
+                          {match.scoreA} - {match.scoreB}
+                        </div>
+                        <Badge variant={match.winner === 'A' ? 'default' : match.winner === 'B' ? 'secondary' : 'outline'}>
+                          {match.winner === 'A' ? 'Ganó Equipo A' : match.winner === 'B' ? 'Ganó Equipo B' : 'Empate'}
+                        </Badge>
+                        {match.isPenalties && (
+                          <div className="text-xs text-muted-foreground mt-1">
+                            Por penales
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Team B */}
+                      <div>
+                        <h4 className="font-semibold mb-2 flex items-center gap-2">
+                          <div className="w-3 h-3 rounded-full bg-lavender"></div>
+                          Equipo B
+                        </h4>
+                        <div className="space-y-1">
+                          {match.teamB.map(playerId => (
+                            <div key={playerId} className="text-sm">
+                              {getPlayerName(playerId)}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+              {/* Paginación */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-center gap-2 mt-6">
+                  <button
+                    className="px-3 py-1 rounded bg-muted text-foreground border border-border disabled:opacity-50"
+                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    disabled={currentPage === 1}
+                  >Anterior</button>
+                  <span className="px-2">Página {currentPage} de {totalPages}</span>
+                  <button
+                    className="px-3 py-1 rounded bg-muted text-foreground border border-border disabled:opacity-50"
+                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                    disabled={currentPage === totalPages}
+                  >Siguiente</button>
+                </div>
+              )}
+            </>;
+          })()}
+        </div>
+      )}
       {/* Edit Dialog */}
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
         <DialogContent className="glass-card max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -459,19 +495,45 @@ export default function MatchManagement() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
-                  {players.map(player => (
-                    <button
-                      key={player.id}
-                      onClick={() => togglePlayer(player.id, 'A')}
-                      className={`w-full text-left p-2 rounded-lg transition-colors ${
-                        teamA.includes(player.id)
-                          ? 'bg-mint/20 border border-mint/50'
-                          : 'hover:bg-muted'
-                      }`}
+                  <Label className="block mb-1">Jugadores Equipo A</Label>
+                  {[0,1,2].map(i => (
+                    <Select
+                      key={i}
+                      value={teamA[i] || ""}
+                      onValueChange={val => {
+                        const newTeam = [...teamA];
+                        newTeam[i] = val;
+                        setTeamA(newTeam.filter(Boolean));
+                      }}
                     >
-                      {player.name}
-                    </button>
+                      <SelectTrigger className="mb-1 w-full">
+                        <SelectValue placeholder={`Selecciona jugador ${i+1}`} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <div className="px-2 py-1">
+                          <Input
+                            placeholder="Buscar..."
+                            value={teamASearches[i]}
+                            onChange={e => {
+                              const newSearches = [...teamASearches];
+                              newSearches[i] = e.target.value;
+                              setTeamASearches(newSearches);
+                            }}
+                            className="mb-2"
+                            autoFocus
+                          />
+                        </div>
+                        {players
+                          .filter(p => !teamA.includes(p.id) || teamA[i] === p.id)
+                          .filter(p => !teamB.includes(p.id))
+                          .filter(p => p.name.toLowerCase().includes(teamASearches[i].toLowerCase()))
+                          .map(player => (
+                            <SelectItem key={player.id} value={player.id}>{player.name}</SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
                   ))}
+                  <div className="text-xs text-muted-foreground">Máximo 3 jugadores</div>
                 </CardContent>
               </Card>
 
@@ -484,76 +546,107 @@ export default function MatchManagement() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
-                  {players.map(player => (
-                    <button
-                      key={player.id}
-                      onClick={() => togglePlayer(player.id, 'B')}
-                      className={`w-full text-left p-2 rounded-lg transition-colors ${
-                        teamB.includes(player.id)
-                          ? 'bg-lavender/20 border border-lavender/50'
-                          : 'hover:bg-muted'
-                      }`}
+                  <Label className="block mb-1">Jugadores Equipo B</Label>
+                  {[0,1,2].map(i => (
+                    <Select
+                      key={i}
+                      value={teamB[i] || ""}
+                      onValueChange={val => {
+                        const newTeam = [...teamB];
+                        newTeam[i] = val;
+                        setTeamB(newTeam.filter(Boolean));
+                      }}
                     >
-                      {player.name}
-                    </button>
+                      <SelectTrigger className="mb-1 w-full">
+                        <SelectValue placeholder={`Selecciona jugador ${i+1}`} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <div className="px-2 py-1">
+                          <Input
+                            placeholder="Buscar..."
+                            value={teamBSearches[i]}
+                            onChange={e => {
+                              const newSearches = [...teamBSearches];
+                              newSearches[i] = e.target.value;
+                              setTeamBSearches(newSearches);
+                            }}
+                            className="mb-2"
+                            autoFocus
+                          />
+                        </div>
+                        {players
+                          .filter(p => !teamB.includes(p.id) || teamB[i] === p.id)
+                          .filter(p => !teamA.includes(p.id))
+                          .filter(p => p.name.toLowerCase().includes(teamBSearches[i].toLowerCase()))
+                          .map(player => (
+                            <SelectItem key={player.id} value={player.id}>{player.name}</SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
                   ))}
+                  <div className="text-xs text-muted-foreground">Máximo 3 jugadores</div>
                 </CardContent>
               </Card>
             </div>
 
-            {/* Player Stats */}
+            {/* Gol Gana o Penales */}
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Estadísticas de Jugadores</h3>
-              {[...teamA, ...teamB].map(playerId => (
-                <Card key={playerId} className="glass-card">
-                  <CardContent className="pt-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="font-medium">{getPlayerName(playerId)}</span>
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          checked={stats[playerId]?.individualPlay || false}
-                          onChange={(e) => setStats(prev => ({...prev, [playerId]: {...(prev[playerId] || {goals:0, assists:0, individualPlay:false}), individualPlay: e.target.checked}}))}
-                          className="rounded"
-                        />
-                        <Label>Jugada Individual</Label>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label>Goles</Label>
-                        <Input
-                          type="number"
-                          min="0"
-                          value={stats[playerId]?.goals || 0}
-                          onChange={(e) => setStats(prev => ({...prev, [playerId]: {...(prev[playerId] || {goals:0, assists:0, individualPlay:false}), goals: parseInt(e.target.value) || 0}}))}
-                        />
-                      </div>
-                      <div>
-                        <Label>Asistencias</Label>
-                        <Input
-                          type="number"
-                          min="0"
-                          value={stats[playerId]?.assists || 0}
-                          onChange={(e) => setStats(prev => ({...prev, [playerId]: {...(prev[playerId] || {goals:0, assists:0, individualPlay:false}), assists: parseInt(e.target.value) || 0}}))}
-                        />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+              <h3 className="text-lg font-semibold">Definición del Partido</h3>
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="edit-penalties"
+                  checked={isPenalties}
+                  onChange={(e) => setIsPenalties(e.target.checked)}
+                  className="rounded"
+                />
+                <Label htmlFor="edit-penalties">Partido definido por penales</Label>
+              </div>
+              {!isPenalties && (
+                <>
+                  <Label className="block">Goleador</Label>
+                  <Select value={scorer} onValueChange={setScorer}>
+                    <SelectTrigger className="mb-2">
+                      <SelectValue placeholder="Selecciona el goleador" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {[...teamA, ...teamB].map(id => (
+                        <SelectItem key={id} value={id}>{getPlayerName(id)}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <div className="flex items-center gap-2 mb-2">
+                    <input
+                      type="checkbox"
+                      id="edit-individual"
+                      checked={individualPlay}
+                      onChange={e => {
+                        setIndividualPlay(e.target.checked);
+                        if (e.target.checked) setAssistant("");
+                      }}
+                      className="rounded"
+                    />
+                    <Label htmlFor="edit-individual">Jugada individual (sin asistencia)</Label>
+                  </div>
+                  {!individualPlay && (
+                    <>
+                      <Label className="block">Asistente</Label>
+                      <Select value={assistant} onValueChange={setAssistant}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecciona el asistente" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {[...teamA, ...teamB].filter(id => id !== scorer).map(id => (
+                            <SelectItem key={id} value={id}>{getPlayerName(id)}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </>
+                  )}
+                </>
+              )}
             </div>
 
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                id="edit-penalties"
-                checked={isPenalties}
-                onChange={(e) => setIsPenalties(e.target.checked)}
-                className="rounded"
-              />
-              <Label htmlFor="edit-penalties">Partido definido por penales</Label>
-            </div>
 
             <Button onClick={handleUpdateMatch} className="w-full">
               Guardar Cambios

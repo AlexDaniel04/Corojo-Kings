@@ -37,6 +37,14 @@ export default function PlayerCards() {
     return player.name.toLowerCase().includes(searchTerm.toLowerCase());
   });
 
+  // Paginación
+  const [currentPage, setCurrentPage] = useState(1);
+  const playersPerPage = 10;
+  const totalPages = Math.ceil(filteredStats.length / playersPerPage);
+  const startIndex = (currentPage - 1) * playersPerPage;
+  const endIndex = startIndex + playersPerPage;
+  const paginatedStats = filteredStats.slice(startIndex, endIndex);
+
   if (loading) {
     return (
       <div className="space-y-6 animate-fade-in">
@@ -54,10 +62,13 @@ export default function PlayerCards() {
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <h2 className="text-2xl font-bold flex items-center gap-2">
-          <Users className="h-6 w-6 text-primary" />
-          Jugadores
-        </h2>
+        <div className="flex flex-col gap-1">
+          <h2 className="text-2xl font-bold flex items-center gap-2">
+            <Users className="h-6 w-6 text-primary" />
+            Jugadores
+          </h2>
+          <span className="text-sm text-muted-foreground">Total de jugadores: <b>{players.length}</b></span>
+        </div>
         <div className="relative w-full max-w-sm">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
@@ -72,7 +83,7 @@ export default function PlayerCards() {
 
       {/* Player Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {filteredStats.map(({ player, stats }, index) => {
+        {paginatedStats.map(({ player, stats }, index) => {
           const isSelected = selectedPlayer === player.id;
           return (
             <div
@@ -93,12 +104,29 @@ export default function PlayerCards() {
                 wins={stats.wins}
                 losses={stats.losses}
                 showExpanded={isSelected}
-                rank={index + 1}
+                rank={startIndex + index + 1}
               />
             </div>
           );
         })}
       </div>
+
+      {/* Paginación */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2 mt-6">
+          <button
+            className="px-3 py-1 rounded bg-muted text-foreground border border-border disabled:opacity-50"
+            onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+            disabled={currentPage === 1}
+          >Anterior</button>
+          <span className="px-2">Página {currentPage} de {totalPages}</span>
+          <button
+            className="px-3 py-1 rounded bg-muted text-foreground border border-border disabled:opacity-50"
+            onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+            disabled={currentPage === totalPages}
+          >Siguiente</button>
+        </div>
+      )}
 
       {filteredStats.length === 0 && (
         <div className="text-center py-12">

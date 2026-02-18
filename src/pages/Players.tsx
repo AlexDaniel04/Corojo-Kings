@@ -11,6 +11,13 @@ import { useToast } from '@/hooks/use-toast';
 
 export default function Players() {
   const { players, addPlayer, updatePlayer, deletePlayer, loading } = useLeague();
+  // Paginación de jugadores
+  const [currentPage, setCurrentPage] = useState(1);
+  const playersPerPage = 10;
+  const totalPages = Math.ceil(players.length / playersPerPage);
+  const startIndex = (currentPage - 1) * playersPerPage;
+  const endIndex = startIndex + playersPerPage;
+  const paginatedPlayers = players.slice(startIndex, endIndex);
   console.log('Admin players:', players);
   const { toast } = useToast();
   const [newPlayerName, setNewPlayerName] = useState('');
@@ -119,10 +126,13 @@ export default function Players() {
       ) : (
         <>
           <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold flex items-center gap-2">
-              <Users className="h-6 w-6 text-primary" />
-              Gestión de Jugadores
-            </h2>
+            <div className="flex flex-col gap-1">
+              <h2 className="text-2xl font-bold flex items-center gap-2">
+                <Users className="h-6 w-6 text-primary" />
+                Gestión de Jugadores
+              </h2>
+              <span className="text-sm text-muted-foreground">Total de jugadores: <b>{players.length}</b></span>
+            </div>
         <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
           <DialogTrigger asChild>
             <Button className="gap-2">
@@ -213,7 +223,7 @@ export default function Players() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {players.map((player) => (
+        {paginatedPlayers.map((player) => (
           <Card key={player.id} className="glass-card">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-3">
@@ -253,6 +263,22 @@ export default function Players() {
           </Card>
         ))}
       </div>
+      {/* Paginación */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2 mt-6">
+          <button
+            className="px-3 py-1 rounded bg-muted text-foreground border border-border disabled:opacity-50"
+            onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+            disabled={currentPage === 1}
+          >Anterior</button>
+          <span className="px-2">Página {currentPage} de {totalPages}</span>
+          <button
+            className="px-3 py-1 rounded bg-muted text-foreground border border-border disabled:opacity-50"
+            onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+            disabled={currentPage === totalPages}
+          >Siguiente</button>
+        </div>
+      )}
 
       {/* Edit Dialog */}
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>

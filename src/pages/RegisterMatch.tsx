@@ -159,24 +159,14 @@ export default function RegisterMatch() {
       </h2>
 
       <div className="glass-card p-4">
-        <label className="text-sm font-medium text-muted-foreground">Fecha</label>
-        <Calendar
-          mode="single"
-          selected={new Date(date)}
-          onSelect={(selectedDate) => {
-            if (selectedDate) {
-              setDate(selectedDate.toISOString().split('T')[0]);
-            }
-          }}
-          modifiers={{
-            hasMatches: datesWithMatches,
-          }}
-          modifiersClassNames={{
-            hasMatches: 'has-matches',
-          }}
-          className="rounded-md border mt-1"
-          disabled={(date) => date > new Date()}
-          initialFocus
+        <label className="text-sm font-medium text-muted-foreground" htmlFor="match-date">Fecha</label>
+        <input
+          id="match-date"
+          type="date"
+          className="mt-1 w-full rounded-md border px-3 py-2 text-base bg-background text-foreground"
+          value={date}
+          max={new Date().toISOString().split('T')[0]}
+          onChange={e => setDate(e.target.value)}
         />
       </div>
 

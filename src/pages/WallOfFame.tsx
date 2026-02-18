@@ -11,6 +11,7 @@ import { es } from 'date-fns/locale';
 import { penaltyPhrase, assistPhrases, individualPhrases, getRandomPhrase } from '@/data/phrases';
 
 export default function WallOfFame() {
+
   const { players, matches } = useLeague();
   const dates = getMatchDates(matches);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(
@@ -45,6 +46,14 @@ export default function WallOfFame() {
       borderRadius: '6px',
     },
   };
+
+  // --- Paginación de partidos ---
+  const [currentPage, setCurrentPage] = useState(1);
+  const matchesPerPage = 10;
+  const totalPages = Math.ceil(dayMatches.length / matchesPerPage);
+  const startIndex = (currentPage - 1) * matchesPerPage;
+  const endIndex = startIndex + matchesPerPage;
+  const paginatedMatches = dayMatches.slice(startIndex, endIndex);
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -107,7 +116,7 @@ export default function WallOfFame() {
 
       {/* Matches */}
       <div className="space-y-4">
-        {dayMatches.map((m, i) => {
+        {paginatedMatches.map((m, i) => {
           const scorer = Object.entries(m.stats).find(([, s]) => s.goals > 0)?.[0];
           const assistant = Object.entries(m.stats).find(([, s]) => s.assists > 0)?.[0];
           const scorerPlayer = scorer ? getPlayer(scorer) : null;
@@ -147,11 +156,12 @@ export default function WallOfFame() {
                     </p>
                     {m.teamA.map(id => {
                       const p = getPlayer(id);
-                      const s = m.stats[id];
+                      let label = '';
+                      if (!m.isPenalties && scorer && id === scorer) label = 'Gol';
+                      if (!m.isPenalties && assistant && id === assistant) label = 'Asis';
                       return (
                         <p key={id} className="text-sm flex items-center gap-1">
-                          {p?.name} — <span className="font-semibold">{s?.goals || 0}G/{s?.assists || 0}A</span>
-                          {s?.individualPlay && <Star className="h-3 w-3 text-yellow-500" />}
+                          {p?.name} {label && <span className="font-semibold">— {label}</span>}
                         </p>
                       );
                     })}
@@ -163,11 +173,12 @@ export default function WallOfFame() {
                     </p>
                     {m.teamB.map(id => {
                       const p = getPlayer(id);
-                      const s = m.stats[id];
+                      let label = '';
+                      if (!m.isPenalties && scorer && id === scorer) label = 'Gol';
+                      if (!m.isPenalties && assistant && id === assistant) label = 'Asis';
                       return (
                         <p key={id} className="text-sm flex items-center gap-1">
-                          {p?.name} — <span className="font-semibold">{s?.goals || 0}G/{s?.assists || 0}A</span>
-                          {s?.individualPlay && <Star className="h-3 w-3 text-yellow-500" />}
+                          {p?.name} {label && <span className="font-semibold">— {label}</span>}
                         </p>
                       );
                     })}
@@ -178,6 +189,22 @@ export default function WallOfFame() {
           );
         })}
       </div>
+      {/* Paginación */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2 mt-6">
+          <button
+            className="px-3 py-1 rounded bg-muted text-foreground border border-border disabled:opacity-50"
+            onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+            disabled={currentPage === 1}
+          >Anterior</button>
+          <span className="px-2">Página {currentPage} de {totalPages}</span>
+          <button
+            className="px-3 py-1 rounded bg-muted text-foreground border border-border disabled:opacity-50"
+            onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+            disabled={currentPage === totalPages}
+          >Siguiente</button>
+        </div>
+      )}
     </div>
   );
 }

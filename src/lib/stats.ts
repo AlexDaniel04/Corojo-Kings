@@ -23,11 +23,11 @@ export function getPlayerStats(
   const lastDate = getMatchDates(matches).slice(-1)[0];
   const lastMatches = matches.filter(m => m.date === lastDate);
 
-  // Calculate last-date points for MVP
+  // Calculate last-date points for MVP (goles x2 + asistencias)
   const lastDatePoints: Record<string, number> = {};
   lastMatches.forEach(m => {
     Object.entries(m.stats).forEach(([playerId, stat]) => {
-      lastDatePoints[playerId] = (lastDatePoints[playerId] || 0) + stat.goals + stat.assists;
+      lastDatePoints[playerId] = (lastDatePoints[playerId] || 0) + stat.goals * 2 + stat.assists;
     });
   });
   const maxLastPoints = Math.max(0, ...Object.values(lastDatePoints));
@@ -81,7 +81,7 @@ export function getPlayerStats(
         if (stats) {
           goals += stats.goals;
           assists += stats.assists;
-          if (stats.goals > 0 && stats.assists === 0) soloGoals += stats.goals;
+          if (stats.goals > 0 && stats.individualPlay) soloGoals += stats.goals;
         }
       }
       if (inA && m.winner === 'A') wins++;
@@ -108,7 +108,7 @@ export function getPlayerStats(
       goals,
       assists,
       soloGoals,
-      points: goals + assists,
+      points: goals * 2 + assists,
       matchesPlayed,
       wins,
       losses,
@@ -189,7 +189,8 @@ export function getDayLeader(players: Player[], matches: Match[], date: string) 
   const points: Record<string, number> = {};
   dayMatches.forEach(m => {
     Object.entries(m.stats).forEach(([playerId, stat]) => {
-      points[playerId] = (points[playerId] || 0) + stat.goals + stat.assists;
+      // Cada gol vale 2 puntos, cada asistencia 1 punto
+      points[playerId] = (points[playerId] || 0) + stat.goals * 2 + stat.assists;
     });
   });
   const maxP = Math.max(0, ...Object.values(points));

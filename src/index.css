@@ -1,3 +1,9 @@
+/* Evita sombreado en días fuera de mes seleccionados en el calendario */
+.rdp-day_outside[aria-selected="true"] {
+  background-color: transparent !important;
+  color: var(--muted-foreground, #888) !important;
+  opacity: 0.5 !important;
+}
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 
 @tailwind base;
@@ -180,6 +186,7 @@
   padding: 0;
 }
 
+
 .rdp-day.has-matches {
   outline: 2px solid rgb(255, 0, 0);
   outline-offset: -2px;
@@ -189,9 +196,15 @@
   border-radius: 6px;
 }
 
+.rdp-day.has-matches:not(.rdp-day_selected) {
+  background-color: transparent !important;
+  color: inherit !important;
+}
+
 .rdp-day_selected {
   animation: selectPulse 0.3s ease-in-out;
 }
+
 
 .rdp-day.has-matches.rdp-day_selected {
   outline: 2px solid rgb(150, 0, 0);
@@ -200,7 +213,7 @@
   color: hsl(var(--primary-foreground)) !important;
 }
 
-.rdp-day_selected:not(.has-matches) {
+.rdp-day_selected {
   background-color: hsl(var(--primary)) !important;
   color: hsl(var(--primary-foreground)) !important;
 }
