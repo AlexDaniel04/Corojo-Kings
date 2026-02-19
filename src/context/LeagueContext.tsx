@@ -1,6 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { Player, Match, FilterMode } from '@/types';
-import { playersWithRealStats as initialPlayers, matches as initialMatches } from '@/data/mockData';
 import { supabase } from '@/lib/supabase';
 import { LeagueContext } from './LeagueContextContext';
 

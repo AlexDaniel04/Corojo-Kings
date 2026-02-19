@@ -94,12 +94,11 @@ export default function Dashboard() {
               <tr className="border-b border-border/50">
                 <th className="text-left px-4 py-3 font-semibold text-muted-foreground">#</th>
                 <th className="text-left px-8 py-3 font-semibold text-muted-foreground min-w-[160px]">Jugador</th>
-                  <th className="text-left px-8 py-3 font-semibold text-muted-foreground whitespace-nowrap max-w-fit">Jugador</th>
                 <th className="text-center px-3 py-3 font-semibold text-muted-foreground">G</th>
                 <th className="text-center px-3 py-3 font-semibold text-muted-foreground">A</th>
                 <th className="text-center px-3 py-3 font-semibold text-muted-foreground">GS</th>
                 <th className="text-center px-3 py-3 font-semibold text-muted-foreground">Pts</th>
-                <th className="text-center px-3 py-3 font-semibold text-muted-foreground">PJ</th>
+                <th className="text-center px-3 py-3 font-semibold text-muted-foreground min-w-[48px]">PJ</th>
               </tr>
             </thead>
             <tbody>
@@ -130,7 +129,7 @@ export default function Dashboard() {
                     <td className="text-center px-3 py-3">
                       <span className="stat-badge bg-mint text-mint-foreground">{s.points}</span>
                     </td>
-                    <td className="text-center px-3 py-3 text-muted-foreground">{s.matchesPlayed}</td>
+                    <td className="text-center px-3 py-3 text-muted-foreground min-w-[48px]">{s.matchesPlayed}</td>
                   </tr>
                 );
               })}

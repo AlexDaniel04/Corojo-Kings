@@ -16,9 +16,15 @@ const COLORS = [
 ];
 
 export default function ProgressCharts() {
+
   const { players, matches, filterMode, setFilterMode } = useLeague();
   const [selectedPlayers, setSelectedPlayers] = useState<string[]>(players.length > 0 ? [players[0].name] : []);
   const [open, setOpen] = useState(false);
+  // Paginación para el selector de jugadores
+  const [playerPage, setPlayerPage] = useState(1);
+  const playersPerPage = 5;
+  const totalPlayerPages = Math.ceil(players.length / playersPerPage);
+  const paginatedPlayers = players.slice((playerPage - 1) * playersPerPage, playerPage * playersPerPage);
 
   const goalsData = getCumulativeData(players, matches, filterMode, 'goals');
   const assistsData = getCumulativeData(players, matches, filterMode, 'assists');
@@ -77,7 +83,7 @@ export default function ProgressCharts() {
               <CommandList>
                 <CommandEmpty>No se encontró jugador.</CommandEmpty>
                 <CommandGroup>
-                  {players.map((player) => (
+                  {paginatedPlayers.map((player) => (
                     <CommandItem
                       key={player.id}
                       value={player.name}
@@ -98,6 +104,22 @@ export default function ProgressCharts() {
                       {player.name}
                     </CommandItem>
                   ))}
+                  {/* Controles de paginación */}
+                  {totalPlayerPages > 1 && (
+                    <div className="flex items-center justify-between px-2 py-1 mt-2">
+                      <button
+                        className="text-xs px-2 py-1 rounded bg-muted hover:bg-accent disabled:opacity-50"
+                        onClick={() => setPlayerPage(p => Math.max(1, p - 1))}
+                        disabled={playerPage === 1}
+                      >Anterior</button>
+                      <span className="text-xs text-muted-foreground">Página {playerPage} de {totalPlayerPages}</span>
+                      <button
+                        className="text-xs px-2 py-1 rounded bg-muted hover:bg-accent disabled:opacity-50"
+                        onClick={() => setPlayerPage(p => Math.min(totalPlayerPages, p + 1))}
+                        disabled={playerPage === totalPlayerPages}
+                      >Siguiente</button>
+                    </div>
+                  )}
                 </CommandGroup>
               </CommandList>
             </Command>

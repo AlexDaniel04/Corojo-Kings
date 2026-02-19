@@ -11,6 +11,13 @@ import { cn } from '@/lib/utils';
 
 export default function PlayerCompare() {
   const { players, matches, filterMode } = useLeague();
+  // Paginación para el selector de jugadores
+  const [playerPage1, setPlayerPage1] = useState(1);
+  const [playerPage2, setPlayerPage2] = useState(1);
+  const playersPerPage = 5;
+  const totalPlayerPages = Math.ceil(players.length / playersPerPage);
+  const paginatedPlayers1 = players.slice((playerPage1 - 1) * playersPerPage, playerPage1 * playersPerPage);
+  const paginatedPlayers2 = players.slice((playerPage2 - 1) * playersPerPage, playerPage2 * playersPerPage);
   const stats = getPlayerStats(players, matches, filterMode);
   const [player1, setPlayer1] = useState<string>('');
   const [player2, setPlayer2] = useState<string>('');
@@ -68,7 +75,7 @@ export default function PlayerCompare() {
                   <CommandList>
                     <CommandEmpty>No se encontró jugador.</CommandEmpty>
                     <CommandGroup>
-                      {players.map((player) => (
+                      {paginatedPlayers1.map((player) => (
                         <CommandItem
                           key={player.id}
                           value={player.name}
@@ -86,6 +93,22 @@ export default function PlayerCompare() {
                           {player.emoji} {player.name}
                         </CommandItem>
                       ))}
+                      {/* Controles de paginación */}
+                      {totalPlayerPages > 1 && (
+                        <div className="flex items-center justify-between px-2 py-1 mt-2">
+                          <button
+                            className="text-xs px-2 py-1 rounded bg-muted hover:bg-accent disabled:opacity-50"
+                            onClick={() => setPlayerPage1(p => Math.max(1, p - 1))}
+                            disabled={playerPage1 === 1}
+                          >Anterior</button>
+                          <span className="text-xs text-muted-foreground">Página {playerPage1} de {totalPlayerPages}</span>
+                          <button
+                            className="text-xs px-2 py-1 rounded bg-muted hover:bg-accent disabled:opacity-50"
+                            onClick={() => setPlayerPage1(p => Math.min(totalPlayerPages, p + 1))}
+                            disabled={playerPage1 === totalPlayerPages}
+                          >Siguiente</button>
+                        </div>
+                      )}
                     </CommandGroup>
                   </CommandList>
                 </Command>
@@ -132,7 +155,7 @@ export default function PlayerCompare() {
                   <CommandList>
                     <CommandEmpty>No se encontró jugador.</CommandEmpty>
                     <CommandGroup>
-                      {players.map((player) => (
+                      {paginatedPlayers2.map((player) => (
                         <CommandItem
                           key={player.id}
                           value={player.name}
@@ -150,6 +173,22 @@ export default function PlayerCompare() {
                           {player.emoji} {player.name}
                         </CommandItem>
                       ))}
+                      {/* Controles de paginación */}
+                      {totalPlayerPages > 1 && (
+                        <div className="flex items-center justify-between px-2 py-1 mt-2">
+                          <button
+                            className="text-xs px-2 py-1 rounded bg-muted hover:bg-accent disabled:opacity-50"
+                            onClick={() => setPlayerPage2(p => Math.max(1, p - 1))}
+                            disabled={playerPage2 === 1}
+                          >Anterior</button>
+                          <span className="text-xs text-muted-foreground">Página {playerPage2} de {totalPlayerPages}</span>
+                          <button
+                            className="text-xs px-2 py-1 rounded bg-muted hover:bg-accent disabled:opacity-50"
+                            onClick={() => setPlayerPage2(p => Math.min(totalPlayerPages, p + 1))}
+                            disabled={playerPage2 === totalPlayerPages}
+                          >Siguiente</button>
+                        </div>
+                      )}
                     </CommandGroup>
                   </CommandList>
                 </Command>

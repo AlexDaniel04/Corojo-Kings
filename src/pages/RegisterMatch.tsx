@@ -30,6 +30,15 @@ export default function RegisterMatch() {
   const [openAsist, setOpenAsist] = useState(false);
   const [statsInput, setStatsInput] = useState<Record<string, { goals: number; assists: number; individualPlay: boolean }>>({});
 
+  // Paginación para seleccionables de jugadores
+  const [pageA, setPageA] = useState(0);
+  const [pageB, setPageB] = useState(0);
+  const PAGE_SIZE = 5;
+  const filteredPlayersA = players.filter(p => !teamB.includes(p.id));
+  const filteredPlayersB = players.filter(p => !teamA.includes(p.id));
+  const paginatedPlayersA = filteredPlayersA.slice(pageA * PAGE_SIZE, (pageA + 1) * PAGE_SIZE);
+  const paginatedPlayersB = filteredPlayersB.slice(pageB * PAGE_SIZE, (pageB + 1) * PAGE_SIZE);
+
   const datesWithMatches = matches.map(match => new Date(match.date + 'T12:00:00'));
 
   const togglePlayer = (id: string, team: 'A' | 'B') => {
@@ -201,7 +210,7 @@ export default function RegisterMatch() {
                       <CommandList>
                         <CommandEmpty>No se encontraron jugadores.</CommandEmpty>
                         <CommandGroup>
-                          {players.filter(p => !teamB.includes(p.id)).map((player) => (
+                          {paginatedPlayersA.map((player) => (
                             <CommandItem
                               key={player.id}
                               onSelect={() => {
@@ -216,6 +225,15 @@ export default function RegisterMatch() {
                               {player.name}
                             </CommandItem>
                           ))}
+                          <div className="flex justify-between items-center px-2 py-1">
+                            <Button variant="ghost" size="sm" onClick={() => setPageA(p => Math.max(0, p - 1))} disabled={pageA === 0}>
+                              Anterior
+                            </Button>
+                            <span className="text-xs">Página {pageA + 1} / {Math.max(1, Math.ceil(filteredPlayersA.length / PAGE_SIZE))}</span>
+                            <Button variant="ghost" size="sm" onClick={() => setPageA(p => p + 1)} disabled={(pageA + 1) * PAGE_SIZE >= filteredPlayersA.length}>
+                              Siguiente
+                            </Button>
+                          </div>
                         </CommandGroup>
                       </CommandList>
                     </Command>
@@ -263,7 +281,7 @@ export default function RegisterMatch() {
                       <CommandList>
                         <CommandEmpty>No se encontraron jugadores.</CommandEmpty>
                         <CommandGroup>
-                          {players.filter(p => !teamA.includes(p.id)).map((player) => (
+                          {paginatedPlayersB.map((player) => (
                             <CommandItem
                               key={player.id}
                               onSelect={() => {
@@ -278,6 +296,15 @@ export default function RegisterMatch() {
                               {player.name}
                             </CommandItem>
                           ))}
+                          <div className="flex justify-between items-center px-2 py-1">
+                            <Button variant="ghost" size="sm" onClick={() => setPageB(p => Math.max(0, p - 1))} disabled={pageB === 0}>
+                              Anterior
+                            </Button>
+                            <span className="text-xs">Página {pageB + 1} / {Math.max(1, Math.ceil(filteredPlayersB.length / PAGE_SIZE))}</span>
+                            <Button variant="ghost" size="sm" onClick={() => setPageB(p => p + 1)} disabled={(pageB + 1) * PAGE_SIZE >= filteredPlayersB.length}>
+                              Siguiente
+                            </Button>
+                          </div>
                         </CommandGroup>
                       </CommandList>
                     </Command>
@@ -510,7 +537,7 @@ export default function RegisterMatch() {
               </CardHeader>
               <CardContent className="space-y-2">
                 <div className="flex flex-wrap gap-2">
-                  {players.filter(p => !teamB.includes(p.id)).map(p => (
+                  {paginatedPlayersA.map(p => (
                     <button
                       key={p.id}
                       onClick={() => togglePlayer(p.id, 'A')}
@@ -521,6 +548,15 @@ export default function RegisterMatch() {
                       {p.name}
                     </button>
                   ))}
+                  <div className="w-full flex justify-between items-center mt-2">
+                    <Button variant="ghost" size="sm" onClick={() => setPageA(p => Math.max(0, p - 1))} disabled={pageA === 0}>
+                      Anterior
+                    </Button>
+                    <span className="text-xs">Página {pageA + 1} / {Math.max(1, Math.ceil(filteredPlayersA.length / PAGE_SIZE))}</span>
+                    <Button variant="ghost" size="sm" onClick={() => setPageA(p => p + 1)} disabled={(pageA + 1) * PAGE_SIZE >= filteredPlayersA.length}>
+                      Siguiente
+                    </Button>
+                  </div>
                 </div>
                 {teamA.map(id => {
                   const p = players.find(pl => pl.id === id)!;
@@ -576,7 +612,7 @@ export default function RegisterMatch() {
               </CardHeader>
               <CardContent className="space-y-2">
                 <div className="flex flex-wrap gap-2">
-                  {players.filter(p => !teamA.includes(p.id)).map(p => (
+                  {paginatedPlayersB.map(p => (
                     <button
                       key={p.id}
                       onClick={() => togglePlayer(p.id, 'B')}
@@ -587,6 +623,15 @@ export default function RegisterMatch() {
                       {p.name}
                     </button>
                   ))}
+                  <div className="w-full flex justify-between items-center mt-2">
+                    <Button variant="ghost" size="sm" onClick={() => setPageB(p => Math.max(0, p - 1))} disabled={pageB === 0}>
+                      Anterior
+                    </Button>
+                    <span className="text-xs">Página {pageB + 1} / {Math.max(1, Math.ceil(filteredPlayersB.length / PAGE_SIZE))}</span>
+                    <Button variant="ghost" size="sm" onClick={() => setPageB(p => p + 1)} disabled={(pageB + 1) * PAGE_SIZE >= filteredPlayersB.length}>
+                      Siguiente
+                    </Button>
+                  </div>
                 </div>
                 {teamB.map(id => {
                   const p = players.find(pl => pl.id === id)!;
