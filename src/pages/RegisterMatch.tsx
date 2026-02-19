@@ -36,8 +36,12 @@ export default function RegisterMatch() {
   const PAGE_SIZE = 5;
   const filteredPlayersA = players.filter(p => !teamB.includes(p.id));
   const filteredPlayersB = players.filter(p => !teamA.includes(p.id));
-  const paginatedPlayersA = filteredPlayersA.slice(pageA * PAGE_SIZE, (pageA + 1) * PAGE_SIZE);
-  const paginatedPlayersB = filteredPlayersB.slice(pageB * PAGE_SIZE, (pageB + 1) * PAGE_SIZE);
+  const [searchA, setSearchA] = useState('');
+  const [searchB, setSearchB] = useState('');
+  const filteredSearchPlayersA = filteredPlayersA.filter(p => p.name.toLowerCase().includes(searchA.toLowerCase()));
+  const filteredSearchPlayersB = filteredPlayersB.filter(p => p.name.toLowerCase().includes(searchB.toLowerCase()));
+  const paginatedPlayersA = filteredSearchPlayersA.slice(pageA * PAGE_SIZE, (pageA + 1) * PAGE_SIZE);
+  const paginatedPlayersB = filteredSearchPlayersB.slice(pageB * PAGE_SIZE, (pageB + 1) * PAGE_SIZE);
 
   const datesWithMatches = matches.map(match => new Date(match.date + 'T12:00:00'));
 
@@ -206,7 +210,7 @@ export default function RegisterMatch() {
                   </PopoverTrigger>
                   <PopoverContent className="w-full p-0">
                     <Command>
-                      <CommandInput placeholder="Buscar jugadores..." />
+                      <CommandInput placeholder="Buscar jugadores..." value={searchA} onValueChange={setSearchA} />
                       <CommandList>
                         <CommandEmpty>No se encontraron jugadores.</CommandEmpty>
                         <CommandGroup>
@@ -229,8 +233,8 @@ export default function RegisterMatch() {
                             <Button variant="ghost" size="sm" onClick={() => setPageA(p => Math.max(0, p - 1))} disabled={pageA === 0}>
                               Anterior
                             </Button>
-                            <span className="text-xs">Página {pageA + 1} / {Math.max(1, Math.ceil(filteredPlayersA.length / PAGE_SIZE))}</span>
-                            <Button variant="ghost" size="sm" onClick={() => setPageA(p => p + 1)} disabled={(pageA + 1) * PAGE_SIZE >= filteredPlayersA.length}>
+                            <span className="text-xs">Página {pageA + 1} / {Math.max(1, Math.ceil(filteredSearchPlayersA.length / PAGE_SIZE))}</span>
+                            <Button variant="ghost" size="sm" onClick={() => setPageA(p => p + 1)} disabled={(pageA + 1) * PAGE_SIZE >= filteredSearchPlayersA.length}>
                               Siguiente
                             </Button>
                           </div>
@@ -277,7 +281,7 @@ export default function RegisterMatch() {
                   </PopoverTrigger>
                   <PopoverContent className="w-full p-0">
                     <Command>
-                      <CommandInput placeholder="Buscar jugadores..." />
+                      <CommandInput placeholder="Buscar jugadores..." value={searchB} onValueChange={setSearchB} />
                       <CommandList>
                         <CommandEmpty>No se encontraron jugadores.</CommandEmpty>
                         <CommandGroup>
@@ -300,8 +304,8 @@ export default function RegisterMatch() {
                             <Button variant="ghost" size="sm" onClick={() => setPageB(p => Math.max(0, p - 1))} disabled={pageB === 0}>
                               Anterior
                             </Button>
-                            <span className="text-xs">Página {pageB + 1} / {Math.max(1, Math.ceil(filteredPlayersB.length / PAGE_SIZE))}</span>
-                            <Button variant="ghost" size="sm" onClick={() => setPageB(p => p + 1)} disabled={(pageB + 1) * PAGE_SIZE >= filteredPlayersB.length}>
+                            <span className="text-xs">Página {pageB + 1} / {Math.max(1, Math.ceil(filteredSearchPlayersB.length / PAGE_SIZE))}</span>
+                            <Button variant="ghost" size="sm" onClick={() => setPageB(p => p + 1)} disabled={(pageB + 1) * PAGE_SIZE >= filteredSearchPlayersB.length}>
                               Siguiente
                             </Button>
                           </div>
@@ -552,8 +556,8 @@ export default function RegisterMatch() {
                     <Button variant="ghost" size="sm" onClick={() => setPageA(p => Math.max(0, p - 1))} disabled={pageA === 0}>
                       Anterior
                     </Button>
-                    <span className="text-xs">Página {pageA + 1} / {Math.max(1, Math.ceil(filteredPlayersA.length / PAGE_SIZE))}</span>
-                    <Button variant="ghost" size="sm" onClick={() => setPageA(p => p + 1)} disabled={(pageA + 1) * PAGE_SIZE >= filteredPlayersA.length}>
+                    <span className="text-xs">Página {pageA + 1} / {Math.max(1, Math.ceil(filteredSearchPlayersA.length / PAGE_SIZE))}</span>
+                    <Button variant="ghost" size="sm" onClick={() => setPageA(p => p + 1)} disabled={(pageA + 1) * PAGE_SIZE >= filteredSearchPlayersA.length}>
                       Siguiente
                     </Button>
                   </div>
@@ -627,8 +631,8 @@ export default function RegisterMatch() {
                     <Button variant="ghost" size="sm" onClick={() => setPageB(p => Math.max(0, p - 1))} disabled={pageB === 0}>
                       Anterior
                     </Button>
-                    <span className="text-xs">Página {pageB + 1} / {Math.max(1, Math.ceil(filteredPlayersB.length / PAGE_SIZE))}</span>
-                    <Button variant="ghost" size="sm" onClick={() => setPageB(p => p + 1)} disabled={(pageB + 1) * PAGE_SIZE >= filteredPlayersB.length}>
+                    <span className="text-xs">Página {pageB + 1} / {Math.max(1, Math.ceil(filteredSearchPlayersB.length / PAGE_SIZE))}</span>
+                    <Button variant="ghost" size="sm" onClick={() => setPageB(p => p + 1)} disabled={(pageB + 1) * PAGE_SIZE >= filteredSearchPlayersB.length}>
                       Siguiente
                     </Button>
                   </div>

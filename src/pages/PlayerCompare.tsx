@@ -16,8 +16,12 @@ export default function PlayerCompare() {
   const [playerPage2, setPlayerPage2] = useState(1);
   const playersPerPage = 5;
   const totalPlayerPages = Math.ceil(players.length / playersPerPage);
-  const paginatedPlayers1 = players.slice((playerPage1 - 1) * playersPerPage, playerPage1 * playersPerPage);
-  const paginatedPlayers2 = players.slice((playerPage2 - 1) * playersPerPage, playerPage2 * playersPerPage);
+  const [search1, setSearch1] = useState('');
+  const [search2, setSearch2] = useState('');
+  const filteredPlayers1 = players.filter(p => p.name.toLowerCase().includes(search1.toLowerCase()));
+  const filteredPlayers2 = players.filter(p => p.name.toLowerCase().includes(search2.toLowerCase()));
+  const paginatedPlayers1 = filteredPlayers1.slice((playerPage1 - 1) * playersPerPage, playerPage1 * playersPerPage);
+  const paginatedPlayers2 = filteredPlayers2.slice((playerPage2 - 1) * playersPerPage, playerPage2 * playersPerPage);
   const stats = getPlayerStats(players, matches, filterMode);
   const [player1, setPlayer1] = useState<string>('');
   const [player2, setPlayer2] = useState<string>('');
@@ -71,7 +75,7 @@ export default function PlayerCompare() {
               </PopoverTrigger>
               <PopoverContent className="w-full p-0" align="start">
                 <Command>
-                  <CommandInput placeholder="Buscar jugador..." />
+                  <CommandInput placeholder="Buscar jugador..." value={search1} onValueChange={setSearch1} />
                   <CommandList>
                     <CommandEmpty>No se encontró jugador.</CommandEmpty>
                     <CommandGroup>
@@ -94,18 +98,18 @@ export default function PlayerCompare() {
                         </CommandItem>
                       ))}
                       {/* Controles de paginación */}
-                      {totalPlayerPages > 1 && (
+                      {Math.ceil(filteredPlayers1.length / playersPerPage) > 1 && (
                         <div className="flex items-center justify-between px-2 py-1 mt-2">
                           <button
                             className="text-xs px-2 py-1 rounded bg-muted hover:bg-accent disabled:opacity-50"
                             onClick={() => setPlayerPage1(p => Math.max(1, p - 1))}
                             disabled={playerPage1 === 1}
                           >Anterior</button>
-                          <span className="text-xs text-muted-foreground">Página {playerPage1} de {totalPlayerPages}</span>
+                          <span className="text-xs text-muted-foreground">Página {playerPage1} de {Math.max(1, Math.ceil(filteredPlayers1.length / playersPerPage))}</span>
                           <button
                             className="text-xs px-2 py-1 rounded bg-muted hover:bg-accent disabled:opacity-50"
-                            onClick={() => setPlayerPage1(p => Math.min(totalPlayerPages, p + 1))}
-                            disabled={playerPage1 === totalPlayerPages}
+                            onClick={() => setPlayerPage1(p => Math.min(Math.ceil(filteredPlayers1.length / playersPerPage), p + 1))}
+                            disabled={playerPage1 === Math.ceil(filteredPlayers1.length / playersPerPage)}
                           >Siguiente</button>
                         </div>
                       )}
@@ -151,7 +155,7 @@ export default function PlayerCompare() {
               </PopoverTrigger>
               <PopoverContent className="w-full p-0" align="start">
                 <Command>
-                  <CommandInput placeholder="Buscar jugador..." />
+                  <CommandInput placeholder="Buscar jugador..." value={search2} onValueChange={setSearch2} />
                   <CommandList>
                     <CommandEmpty>No se encontró jugador.</CommandEmpty>
                     <CommandGroup>
@@ -174,18 +178,18 @@ export default function PlayerCompare() {
                         </CommandItem>
                       ))}
                       {/* Controles de paginación */}
-                      {totalPlayerPages > 1 && (
+                      {Math.ceil(filteredPlayers2.length / playersPerPage) > 1 && (
                         <div className="flex items-center justify-between px-2 py-1 mt-2">
                           <button
                             className="text-xs px-2 py-1 rounded bg-muted hover:bg-accent disabled:opacity-50"
                             onClick={() => setPlayerPage2(p => Math.max(1, p - 1))}
                             disabled={playerPage2 === 1}
                           >Anterior</button>
-                          <span className="text-xs text-muted-foreground">Página {playerPage2} de {totalPlayerPages}</span>
+                          <span className="text-xs text-muted-foreground">Página {playerPage2} de {Math.max(1, Math.ceil(filteredPlayers2.length / playersPerPage))}</span>
                           <button
                             className="text-xs px-2 py-1 rounded bg-muted hover:bg-accent disabled:opacity-50"
-                            onClick={() => setPlayerPage2(p => Math.min(totalPlayerPages, p + 1))}
-                            disabled={playerPage2 === totalPlayerPages}
+                            onClick={() => setPlayerPage2(p => Math.min(Math.ceil(filteredPlayers2.length / playersPerPage), p + 1))}
+                            disabled={playerPage2 === Math.ceil(filteredPlayers2.length / playersPerPage)}
                           >Siguiente</button>
                         </div>
                       )}

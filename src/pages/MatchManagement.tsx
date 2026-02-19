@@ -423,6 +423,21 @@ export default function MatchManagement() {
                         <Badge variant={match.winner === 'A' ? 'default' : match.winner === 'B' ? 'secondary' : 'outline'}>
                           {match.winner === 'A' ? 'Ganó Equipo A' : match.winner === 'B' ? 'Ganó Equipo B' : 'Empate'}
                         </Badge>
+                        {/* Mostrar goleador y asistente si existen */}
+                        {(() => {
+                          // Buscar goleador y asistente
+                          const stats = match.stats || {};
+                          const goalEntry = Object.entries(stats).find(([, s]) => s.goals === 1);
+                          let scorer = goalEntry ? goalEntry[0] : null;
+                          let assistant = scorer && stats[scorer]?.individualPlay ? null : Object.entries(stats).find(([, s]) => s.assists === 1)?.[0];
+                          return (scorer || assistant) ? (
+                            <div className="mt-2 text-xs text-muted-foreground flex flex-col gap-1">
+                              {scorer && <span>Goleador: <span className="font-semibold text-foreground">{getPlayerName(scorer)}</span></span>}
+                              {assistant && <span>Asistencia: <span className="font-semibold text-foreground">{getPlayerName(assistant)}</span></span>}
+                              {scorer && stats[scorer]?.individualPlay && <span className="italic">Jugada individual</span>}
+                            </div>
+                          ) : null;
+                        })()}
                         {match.isPenalties && (
                           <div className="text-xs text-muted-foreground mt-1">
                             Por penales

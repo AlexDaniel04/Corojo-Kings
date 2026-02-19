@@ -24,7 +24,9 @@ export default function ProgressCharts() {
   const [playerPage, setPlayerPage] = useState(1);
   const playersPerPage = 5;
   const totalPlayerPages = Math.ceil(players.length / playersPerPage);
-  const paginatedPlayers = players.slice((playerPage - 1) * playersPerPage, playerPage * playersPerPage);
+  const [search, setSearch] = useState('');
+  const filteredPlayers = players.filter(p => p.name.toLowerCase().includes(search.toLowerCase()));
+  const paginatedPlayers = filteredPlayers.slice((playerPage - 1) * playersPerPage, playerPage * playersPerPage);
 
   const goalsData = getCumulativeData(players, matches, filterMode, 'goals');
   const assistsData = getCumulativeData(players, matches, filterMode, 'assists');
@@ -79,7 +81,7 @@ export default function ProgressCharts() {
           </PopoverTrigger>
           <PopoverContent className="w-[300px] p-0">
             <Command>
-              <CommandInput placeholder="Buscar jugador..." />
+              <CommandInput placeholder="Buscar jugador..." value={search} onValueChange={setSearch} />
               <CommandList>
                 <CommandEmpty>No se encontró jugador.</CommandEmpty>
                 <CommandGroup>
@@ -105,18 +107,18 @@ export default function ProgressCharts() {
                     </CommandItem>
                   ))}
                   {/* Controles de paginación */}
-                  {totalPlayerPages > 1 && (
+                  {Math.ceil(filteredPlayers.length / playersPerPage) > 1 && (
                     <div className="flex items-center justify-between px-2 py-1 mt-2">
                       <button
                         className="text-xs px-2 py-1 rounded bg-muted hover:bg-accent disabled:opacity-50"
                         onClick={() => setPlayerPage(p => Math.max(1, p - 1))}
                         disabled={playerPage === 1}
                       >Anterior</button>
-                      <span className="text-xs text-muted-foreground">Página {playerPage} de {totalPlayerPages}</span>
+                      <span className="text-xs text-muted-foreground">Página {playerPage} de {Math.max(1, Math.ceil(filteredPlayers.length / playersPerPage))}</span>
                       <button
                         className="text-xs px-2 py-1 rounded bg-muted hover:bg-accent disabled:opacity-50"
-                        onClick={() => setPlayerPage(p => Math.min(totalPlayerPages, p + 1))}
-                        disabled={playerPage === totalPlayerPages}
+                        onClick={() => setPlayerPage(p => Math.min(Math.ceil(filteredPlayers.length / playersPerPage), p + 1))}
+                        disabled={playerPage === Math.ceil(filteredPlayers.length / playersPerPage)}
                       >Siguiente</button>
                     </div>
                   )}
