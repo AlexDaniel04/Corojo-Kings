@@ -137,7 +137,14 @@ export function getCumulativeData(
       let total = 0;
       matchesSoFar.forEach(m => {
         const s = m.stats[p.id];
-        if (s) total += s[stat];
+        if (s) {
+          if (stat === 'soloGoals') {
+            // Sumar goles individuales: goles donde individualPlay es true
+            if (s.individualPlay) total += s.goals;
+          } else {
+            total += s[stat];
+          }
+        }
       });
       if (total > 0) entry[p.name] = total;
     });

@@ -3,9 +3,8 @@ import { useLeague } from '@/context/useLeague';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { PlayerCard } from '@/components/PlayerCard';
 import { Trash2, Edit, Plus, Users, Upload, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -113,6 +112,9 @@ export default function Players() {
       toast({ title: 'Jugador eliminado', description: `${player.name} ha sido removido de la liga` });
     }
   };
+
+  // Estado para controlar qué jugador está expandido
+  const [expandedPlayerId, setExpandedPlayerId] = useState<string | null>(null);
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -223,45 +225,49 @@ export default function Players() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {paginatedPlayers.map((player) => (
-          <Card key={player.id} className="glass-card">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-3">
-                <Avatar className="h-10 w-10">
-                  {player.avatar ? (
-                    <img src={player.avatar} alt={player.name} className="object-cover w-full h-full rounded-full" />
-                  ) : (
-                    <AvatarFallback className="bg-gradient-to-br from-pink-200 to-purple-200 text-purple-700">
-                      {player.name.charAt(0).toUpperCase()}
-                    </AvatarFallback>
-                  )}
-                </Avatar>
-                <span className="text-lg">{player.name}</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleEditPlayer(player.id)}
-                  className="flex-1 gap-1"
-                >
-                  <Edit className="h-3 w-3" />
-                  Editar
-                </Button>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => handleDeletePlayer(player.id)}
-                  className="gap-1"
-                >
-                  <Trash2 className="h-3 w-3" />
-                </Button>
+        {paginatedPlayers.map((player) => {
+          const isExpanded = expandedPlayerId === player.id;
+          return (
+            <div key={player.id} className="relative">
+              <div
+                onClick={() => setExpandedPlayerId(isExpanded ? null : player.id)}
+                style={{ cursor: 'pointer' }}
+              >
+                <PlayerCard
+                  player={player}
+                  showExpanded={isExpanded}
+                  goals={player.stats?.goals ?? 0}
+                  assists={player.stats?.assists ?? 0}
+                  soloGoals={0}
+                  wins={player.stats?.wins ?? 0}
+                  losses={player.stats?.losses ?? 0}
+                />
               </div>
-            </CardContent>
-          </Card>
-        ))}
+              {/* Botones de acción solo visibles cuando está expandido */}
+              {isExpanded && (
+                <div className="flex gap-2 mt-4 px-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={(e) => { e.stopPropagation(); handleEditPlayer(player.id); }}
+                    className="flex-1 gap-1"
+                  >
+                    <Edit className="h-3 w-3" />
+                    Editar
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={(e) => { e.stopPropagation(); handleDeletePlayer(player.id); }}
+                    className="gap-1"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
       {/* Paginación */}
       {totalPages > 1 && (

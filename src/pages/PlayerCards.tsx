@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useLeague } from '@/context/useLeague';
 import { getPlayerStats } from '@/lib/stats';
-import PlayerCard from '@/components/PlayerCard';
+import { PlayerCard } from '@/components/PlayerCard';
 import { Input } from '@/components/ui/input';
 import { Crown, Flame, Users, Search } from 'lucide-react';
 

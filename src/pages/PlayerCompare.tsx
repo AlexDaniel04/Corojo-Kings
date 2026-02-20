@@ -4,12 +4,15 @@ import { getPlayerStats } from '@/lib/stats';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Cell } from 'recharts';
 import { Swords, Zap, Check, ChevronsUpDown } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 
 export default function PlayerCompare() {
+    const [showVsDialog, setShowVsDialog] = useState(false);
+    const [loadingVs, setLoadingVs] = useState(false);
   const { players, matches, filterMode } = useLeague();
   // Paginación para el selector de jugadores
   const [playerPage1, setPlayerPage1] = useState(1);
@@ -20,6 +23,7 @@ export default function PlayerCompare() {
   const [search2, setSearch2] = useState('');
   const filteredPlayers1 = players.filter(p => p.name.toLowerCase().includes(search1.toLowerCase()));
   const filteredPlayers2 = players.filter(p => p.name.toLowerCase().includes(search2.toLowerCase()));
+
   const paginatedPlayers1 = filteredPlayers1.slice((playerPage1 - 1) * playersPerPage, playerPage1 * playersPerPage);
   const paginatedPlayers2 = filteredPlayers2.slice((playerPage2 - 1) * playersPerPage, playerPage2 * playersPerPage);
   const stats = getPlayerStats(players, matches, filterMode);
@@ -34,12 +38,29 @@ export default function PlayerCompare() {
   const categories = p1 && p2
     ? [
         { name: 'Goles', a: p1.goals, b: p2.goals },
+        { name: 'Goles Solo', a: p1.soloGoals, b: p2.soloGoals },
         { name: 'Asistencias', a: p1.assists, b: p2.assists },
         { name: 'Puntos', a: p1.points, b: p2.points },
         { name: 'Victorias', a: p1.wins, b: p2.wins },
         { name: 'Partidos', a: p1.matchesPlayed, b: p2.matchesPlayed },
       ]
     : [];
+
+  // Cálculo de probabilidad 1vs1
+  let prob1 = 0, prob2 = 0;
+  if (p1 && p2) {
+    // Pesos: goles 40%, goles solo 30%, victorias 30%
+    const totalGoles = p1.goals + p2.goals;
+    const totalSolo = p1.soloGoals + p2.soloGoals;
+    const totalWins = p1.wins + p2.wins;
+    prob1 =
+      (totalGoles > 0 ? (p1.goals / totalGoles) * 0.4 : 0.2) +
+      (totalSolo > 0 ? (p1.soloGoals / totalSolo) * 0.3 : 0.15) +
+      (totalWins > 0 ? (p1.wins / totalWins) * 0.3 : 0.15);
+    prob2 = 1 - prob1;
+    prob1 = Math.round(prob1 * 100);
+    prob2 = 100 - prob1;
+  }
 
   return (
     <div className="space-y-8 animate-fade-in">
@@ -94,7 +115,7 @@ export default function PlayerCompare() {
                               player1 === player.id ? "opacity-100" : "opacity-0"
                             )}
                           />
-                          {player.emoji} {player.name}
+                          {player.name}
                         </CommandItem>
                       ))}
                       {/* Controles de paginación */}
@@ -120,7 +141,6 @@ export default function PlayerCompare() {
             </Popover>
             {p1 && (
               <div className="mt-4 text-center">
-                <div className="text-4xl mb-2">{p1.emoji}</div>
                 <div className="font-semibold">{p1.name}</div>
               </div>
             )}
@@ -174,7 +194,7 @@ export default function PlayerCompare() {
                               player2 === player.id ? "opacity-100" : "opacity-0"
                             )}
                           />
-                          {player.emoji} {player.name}
+                          {player.name}
                         </CommandItem>
                       ))}
                       {/* Controles de paginación */}
@@ -200,7 +220,6 @@ export default function PlayerCompare() {
             </Popover>
             {p2 && (
               <div className="mt-4 text-center">
-                <div className="text-4xl mb-2">{p2.emoji}</div>
                 <div className="font-semibold">{p2.name}</div>
               </div>
             )}
@@ -208,12 +227,64 @@ export default function PlayerCompare() {
         </Card>
       </div>
 
-      {/* Comparison Results */}
+
+      {/* Botón y diálogo VS 1vs1 */}
       {p1 && p2 && (
-        <Card className="glass-card-strong max-w-4xl mx-auto">
+        <div className="flex flex-col items-center gap-6 my-8">
+          <Button
+            className="px-6 py-3 font-bold shadow-lg bg-gradient-to-r from-mint to-lavender hover:from-lavender hover:to-mint transition-all duration-300"
+            onClick={() => {
+              setLoadingVs(true);
+              setTimeout(() => {
+                setLoadingVs(false);
+                setShowVsDialog(true);
+              }, 1000);
+            }}
+            disabled={loadingVs}
+          >
+            Calcular ganador 1 vs 1
+          </Button>
+          {loadingVs && (
+            <div className="w-48 h-2 bg-muted rounded-full overflow-hidden relative">
+              <div className="absolute left-0 top-0 h-full bg-gradient-to-r from-mint to-lavender animate-pulse" style={{ width: '100%' }} />
+            </div>
+          )}
+          <Dialog open={showVsDialog} onOpenChange={setShowVsDialog}>
+            <DialogContent className="max-w-lg glass-card-strong animate-fade-in-up">
+              <DialogHeader>
+                <DialogTitle className="flex flex-col items-center gap-4">
+                  <span className="flex flex-row items-center gap-2 whitespace-nowrap text-xl md:text-2xl font-black">
+                    <span className="max-w-[10rem] md:max-w-[16rem] truncate">{p1.name}</span>
+                    <span className="text-primary mx-2 md:mx-4 font-black text-2xl md:text-3xl">VS</span>
+                    <span className="max-w-[10rem] md:max-w-[16rem] truncate">{p2.name}</span>
+                  </span>
+                  <div className="flex justify-center gap-8 mt-2">
+                    <div className="flex flex-col items-center">
+                      <span className="text-2xl md:text-3xl font-bold text-mint animate-bounce">{prob1}%</span>
+                      <span className="text-xs text-muted-foreground">Prob. de ganar</span>
+                    </div>
+                    <div className="flex flex-col items-center">
+                      <span className="text-2xl md:text-3xl font-bold text-lavender animate-bounce">{prob2}%</span>
+                      <span className="text-xs text-muted-foreground">Prob. de ganar</span>
+                    </div>
+                  </div>
+                </DialogTitle>
+              </DialogHeader>
+            </DialogContent>
+          </Dialog>
+        </div>
+      )}
+
+      {/* Comparison Results (sin probabilidad VS) */}
+      {p1 && p2 && (
+        <Card className="glass-card-strong max-w-4xl mx-auto shadow-2xl animate-fade-in-up">
           <CardHeader>
-            <CardTitle className="text-center text-lg md:text-xl">
-              {p1.emoji} {p1.name} <span className="text-primary mx-2 md:mx-4">⚔️</span> {p2.emoji} {p2.name}
+            <CardTitle className="text-center text-lg md:text-xl flex flex-col gap-2">
+              <span>
+                <span className={categories.every(cat => cat.a > cat.b) ? 'winner-glow' : ''}>{p1.name}</span>
+                <span className="text-primary mx-2 md:mx-4">⚔️</span>
+                <span className={categories.every(cat => cat.b > cat.a) ? 'winner-glow' : ''}>{p2.name}</span>
+              </span>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -222,26 +293,81 @@ export default function PlayerCompare() {
                 const aWins = cat.a > cat.b;
                 const bWins = cat.b > cat.a;
                 const tie = cat.a === cat.b;
+                // Lógica de dirección de ola y partícula
+                const mintBarClass = aWins ? 'bar-wave-effect bar-winner wave-bar-left' : 'bar-static-loser';
+                const lavenderBarClass = bWins ? 'bar-wave-effect bar-winner wave-bar-right' : 'bar-static-loser';
+                const mintBarWidth = cat.a + cat.b > 0 ? Math.max((cat.a / (cat.a + cat.b)) * 100, 4) : 4;
+                const lavenderBarWidth = cat.a + cat.b > 0 ? Math.max((cat.b / (cat.a + cat.b)) * 100, 4) : 4;
                 return (
                   <div key={cat.name} className="space-y-2">
                     <div className="flex justify-between items-center">
-                      <span className={`font-bold text-base md:text-lg ${aWins ? 'text-mint-foreground' : tie ? 'text-muted-foreground' : 'text-muted-foreground'}`}>
+                      <span className={`font-bold text-base md:text-lg ${aWins ? 'text-mint-foreground' : tie ? 'text-muted-foreground' : 'text-muted-foreground'}`}> 
                         {cat.a}
                       </span>
                       <span className="text-xs md:text-sm font-medium text-center px-2 md:px-4">{cat.name}</span>
-                      <span className={`font-bold text-base md:text-lg ${bWins ? 'text-lavender-foreground' : tie ? 'text-muted-foreground' : 'text-muted-foreground'}`}>
+                      <span className={`font-bold text-base md:text-lg ${bWins ? 'text-lavender-foreground' : tie ? 'text-muted-foreground' : 'text-muted-foreground'}`}> 
                         {cat.b}
                       </span>
                     </div>
-                    <div className="flex h-3 md:h-4 rounded-full overflow-hidden bg-muted">
+                    <div className="flex h-3 md:h-4 rounded-full overflow-hidden bg-muted relative">
+                      {/* Barra izquierda (mint) */}
                       <div
-                        className="bg-mint transition-all duration-700"
-                        style={{ width: cat.a + cat.b > 0 ? `${(cat.a / (cat.a + cat.b)) * 100}%` : '50%' }}
-                      />
+                        id={`mint-bar-${cat.name}`}
+                        className={`bg-mint ${mintBarClass}`}
+                        style={{
+                          width: `calc(${mintBarWidth}% - 2px)`,
+                          minWidth: '24px',
+                          height: '20px',
+                          borderRadius: '8px',
+                          margin: '2px 0',
+                          boxShadow: aWins ? '0 0 24px 8px #5eead4cc, 0 0 32px 12px #fff8' : 'none',
+                          zIndex: 2,
+                          opacity: aWins ? 1 : 0.5,
+                          position: 'relative',
+                          transition: 'width 0.5s',
+                        }}
+                      >
+                        {/* Partícula en la punta si mint gana */}
+                        {aWins && (
+                          <span
+                            className="bar-tip"
+                            style={{
+                              right: '-9px',
+                              left: 'auto',
+                              position: 'absolute',
+                            }}
+                          />
+                        )}
+                      </div>
+                      {/* Barra derecha (lavender) */}
                       <div
-                        className="bg-lavender transition-all duration-700"
-                        style={{ width: cat.a + cat.b > 0 ? `${(cat.b / (cat.a + cat.b)) * 100}%` : '50%' }}
-                      />
+                        id={`lavender-bar-${cat.name}`}
+                        className={`bg-lavender ${lavenderBarClass}`}
+                        style={{
+                          width: `calc(${lavenderBarWidth}% - 2px)`,
+                          minWidth: '24px',
+                          height: '20px',
+                          borderRadius: '8px',
+                          margin: '2px 0',
+                          boxShadow: bWins ? '0 0 24px 8px #a78bfa99, 0 0 32px 12px #fff8' : 'none',
+                          zIndex: 2,
+                          opacity: bWins ? 1 : 0.5,
+                          position: 'relative',
+                          transition: 'width 0.5s',
+                        }}
+                      >
+                        {/* Partícula en la punta si lavender gana */}
+                        {bWins && (
+                          <span
+                            className="bar-tip"
+                            style={{
+                              left: '-9px',
+                              right: 'auto',
+                              position: 'absolute',
+                            }}
+                          />
+                        )}
+                      </div>
                     </div>
                   </div>
                 );
@@ -250,11 +376,11 @@ export default function PlayerCompare() {
 
             <div className="flex flex-col md:flex-row justify-center gap-4 md:gap-8 pt-4 md:pt-6 text-xs md:text-sm">
               <span className="flex items-center justify-center gap-2">
-                <span className="w-3 h-3 md:w-4 md:h-4 rounded bg-mint" />
+                <span className="w-3 h-3 md:w-4 md:h-4 rounded bg-mint animate-fade-in-up" />
                 {p1.name}
               </span>
               <span className="flex items-center justify-center gap-2">
-                <span className="w-3 h-3 md:w-4 md:h-4 rounded bg-lavender" />
+                <span className="w-3 h-3 md:w-4 md:h-4 rounded bg-lavender animate-fade-in-up" />
                 {p2.name}
               </span>
             </div>

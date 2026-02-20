@@ -193,9 +193,10 @@ export default function MatchManagement() {
               Añadir Partido
             </Button>
           </DialogTrigger>
-          <DialogContent className="glass-card max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="glass-card max-w-2xl max-h-[90vh] overflow-y-auto" aria-describedby="add-match-desc">
             <DialogHeader>
               <DialogTitle>Añadir Nuevo Partido</DialogTitle>
+              <p id="add-match-desc" className="sr-only">Formulario para registrar un nuevo partido en la liga, incluyendo equipos, goles y definición.</p>
             </DialogHeader>
             <div className="space-y-6">
               <div>
@@ -485,9 +486,10 @@ export default function MatchManagement() {
       )}
       {/* Edit Dialog */}
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-        <DialogContent className="glass-card max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="glass-card max-w-2xl max-h-[90vh] overflow-y-auto" aria-describedby="edit-match-desc">
           <DialogHeader>
             <DialogTitle>Editar Partido</DialogTitle>
+            <p id="edit-match-desc" className="sr-only">Formulario para editar los datos de un partido existente, incluyendo equipos, goles y definición.</p>
           </DialogHeader>
           <div className="space-y-6">
             <div>
